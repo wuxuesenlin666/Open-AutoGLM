@@ -150,8 +150,15 @@ Google Colab 提供免费的 GPU 资源，适合学习和测试：
 !python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
   --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 8192 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
   --port 8000 \
-  --quantization awq  # 使用量化减少显存占用
+  --quantization awq  # 使用量化减少显存占用，降低 max-model-len 减少显存占用
 ```
 
 #### 2. Kaggle Notebooks
@@ -224,15 +231,31 @@ Hugging Face 提供免费的模型托管服务：
 # INT8 量化 (约减少 50% 显存)
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
-  --quantization int8 \
-  ...
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization int8
 
 # AWQ 4-bit 量化 (约减少 75% 显存)
 # 需要先准备 AWQ 量化权重
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
-  --quantization awq \
-  ...
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization awq
 ```
 
 **预期显存占用:**

@@ -169,8 +169,15 @@ Google Colab provides free GPU resources, ideal for learning and testing:
 !python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
   --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 8192 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
   --port 8000 \
-  --quantization awq  # Use quantization to reduce VRAM usage
+  --quantization awq  # Use quantization to reduce VRAM usage, lower max-model-len to save memory
 ```
 
 #### 2. Kaggle Notebooks
@@ -263,15 +270,31 @@ If GPU VRAM is insufficient, use model quantization techniques:
 # INT8 quantization (approximately 50% VRAM reduction)
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
-  --quantization int8 \
-  ...
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization int8
 
 # AWQ 4-bit quantization (approximately 75% VRAM reduction)
 # Requires pre-prepared AWQ quantized weights
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
-  --quantization awq \
-  ...
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization awq
 ```
 
 **Expected VRAM Usage:**
