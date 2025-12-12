@@ -126,6 +126,207 @@ python3 -m vllm.entrypoints.openai.api_server \
 - After successful startup, you can access the model service via `http://localhost:8000/v1`. If you deploy the model on
   a remote server, use that server's IP to access the model.
 
+## Free GPU Server Deployment Options
+
+If you don't have a GPU server with sufficient VRAM, consider using the following free or low-cost GPU resources to deploy the AutoGLM-Phone-9B model:
+
+### GPU Requirements
+
+AutoGLM-Phone-9B is a 9B parameter multimodal model with recommended specifications:
+- **Minimum**: 24GB VRAM (e.g., NVIDIA RTX 3090, RTX 4090, A5000)
+- **Recommended**: 40GB+ VRAM (e.g., NVIDIA A100, A6000)
+- **Quantized**: 16GB VRAM (using INT4/INT8 quantization)
+
+### Free/Low-Cost GPU Platform Recommendations
+
+#### 1. Google Colab (Recommended for Beginners)
+
+Google Colab provides free GPU resources, ideal for learning and testing:
+
+**Free Tier Features:**
+- GPU: Tesla T4 (16GB VRAM) or V100 (16GB)
+- Maximum 12 hours per session
+- Requires periodic reconnection
+- Suitable for testing and learning
+
+**Colab Pro/Pro+ (Paid):**
+- GPU: V100 (16GB) or A100 (40GB)
+- Longer runtime and better stability
+- Monthly cost: $9.99 (Pro) or $49.99 (Pro+)
+
+**Usage Steps:**
+1. Visit [Google Colab](https://colab.research.google.com/)
+2. Create a new notebook and enable GPU: `Runtime -> Change runtime type -> GPU`
+3. Install dependencies and deploy model
+4. Use tunneling tools (e.g., ngrok) to expose the model service
+
+**Example Code:**
+```python
+# Install dependencies
+!pip install vllm transformers
+
+# Start model service (recommended to use quantization for T4's 16GB VRAM)
+!python -m vllm.entrypoints.openai.api_server \
+  --model zai-org/AutoGLM-Phone-9B \
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 8192 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization awq  # Use quantization to reduce VRAM usage, lower max-model-len to save memory
+```
+
+#### 2. Kaggle Notebooks
+
+Kaggle provides stable free GPU resources:
+
+**Free Tier Features:**
+- GPU: Tesla P100 (16GB) or T4 (16GB)
+- 30 hours of free GPU time per week
+- Relatively stable, suitable for medium-duration tasks
+
+**Usage Steps:**
+1. Register a [Kaggle](https://www.kaggle.com/) account
+2. Create a notebook: `Notebooks -> New Notebook`
+3. Enable GPU: `Settings -> Accelerator -> GPU`
+4. Deploy model and expose service
+
+#### 3. Hugging Face Spaces (For Demo Deployment)
+
+Hugging Face provides free model hosting services:
+
+**Features:**
+- Free tier: CPU/small GPU
+- Paid tier: A10G (24GB) or A100 (40GB)
+- Suitable for deploying demos and long-term services
+- Seamless integration with Hugging Face model hub
+
+**Usage Steps:**
+1. Create a new Space at [Hugging Face Spaces](https://huggingface.co/spaces)
+2. Choose Gradio or Docker template
+3. Configure hardware: Settings -> Hardware -> GPU
+4. Deploy model service
+
+#### 4. AutoDL / ZhiXingYun / HengYuanCloud (China Options)
+
+Chinese platforms offering low-cost GPU rentals:
+
+**AutoDL (Recommended for Chinese Users):**
+- Hourly billing, affordable pricing (RTX 3090 ~¥2-3/hour)
+- Various GPUs available: RTX 3090, A5000, A100, etc.
+- Fast access in China, supports WeChat/Alipay payment
+- Website: [https://www.autodl.com/](https://www.autodl.com/)
+
+**ZhiXingYun:**
+- Affordable pricing, discounts for new users
+- Multiple GPU options
+- Website: [https://www.ai-galaxy.cn/](https://www.ai-galaxy.cn/)
+
+**HengYuanCloud:**
+- Pay-as-you-go, flexible billing
+- Rich GPU selection
+- Website: [https://gpushare.com/](https://gpushare.com/)
+
+#### 5. Lightning AI (formerly Grid.ai)
+
+Provides free and paid GPU cloud services:
+
+**Features:**
+- Free tier: Limited free GPU hours per month
+- Easy deployment and management
+- Supports PyTorch ecosystem
+- Website: [https://lightning.ai/](https://lightning.ai/)
+
+#### 6. RunPod
+
+Cost-effective GPU cloud platform:
+
+**Features:**
+- Pay-per-second billing
+- Various GPU options at competitive prices
+- Community cloud with lower prices
+- Website: [https://www.runpod.io/](https://www.runpod.io/)
+
+#### 7. Paperspace Gradient
+
+Developer-friendly GPU platform:
+
+**Features:**
+- Free tier available with limited resources
+- Jupyter notebooks with GPU support
+- Easy integration with Git repositories
+- Website: [https://www.paperspace.com/gradient](https://www.paperspace.com/gradient)
+
+### Model Quantization to Reduce VRAM Requirements
+
+If GPU VRAM is insufficient, use model quantization techniques:
+
+**Using vLLM Quantization (Recommended):**
+```bash
+# INT8 quantization (approximately 50% VRAM reduction)
+python -m vllm.entrypoints.openai.api_server \
+  --model zai-org/AutoGLM-Phone-9B \
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization int8
+
+# AWQ 4-bit quantization (approximately 75% VRAM reduction)
+# Requires pre-prepared AWQ quantized weights
+python -m vllm.entrypoints.openai.api_server \
+  --model zai-org/AutoGLM-Phone-9B \
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization awq
+```
+
+**Expected VRAM Usage:**
+- FP16 Full Precision: ~20GB
+- INT8 Quantization: ~10GB
+- INT4/AWQ Quantization: ~6GB
+
+### Best Practices for Remote Deployment
+
+1. **Choose the Right Platform**: Beginners should use Colab/Kaggle; for long-term use, consider hourly billing platforms
+2. **Use Quantization**: If VRAM is limited, prioritize INT8 or AWQ quantization
+3. **Configure Network Access**: Use ngrok, frp, or platform-provided public IPs to expose services
+4. **Save Checkpoints Regularly**: Free platforms may disconnect; save your work progress regularly
+5. **Monitor Resource Usage**: Pay attention to GPU usage time limits and quotas
+
+### Troubleshooting
+
+**Out of Memory (OOM):**
+- Try using quantization: `--quantization int8` or `--quantization awq`
+- Reduce batch size: `--max-num-seqs 1`
+- Use a smaller context window: `--max-model-len 8192`
+
+**Connection Timeout:**
+- Use stable tunneling tools (ngrok, cloudflared)
+- Configure appropriate timeout parameters
+- Consider using platforms closer to your region to reduce latency
+
+**Model Loading Issues:**
+- Ensure sufficient disk space for model weights (~20GB)
+- Verify network connection to Hugging Face/ModelScope
+- Use mirror sites if official sites are slow
+
 ## Using AutoGLM
 
 ### Command Line

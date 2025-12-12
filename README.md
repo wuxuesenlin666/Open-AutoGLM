@@ -107,6 +107,182 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 - 运行成功后，将可以通过 `http://localhost:8000/v1` 访问模型服务。 如果您在远程服务器部署模型, 使用该服务器的IP访问模型.
 
+## 免费 GPU 服务器部署方案
+
+如果您没有显存较大的 GPU 服务器，可以考虑使用以下免费或低成本的 GPU 资源来部署 AutoGLM-Phone-9B 模型：
+
+### GPU 资源需求
+
+AutoGLM-Phone-9B 是一个 9B 参数的多模态模型，推荐配置：
+- **最低要求**: 24GB 显存 (如 NVIDIA RTX 3090, RTX 4090, A5000)
+- **推荐配置**: 40GB+ 显存 (如 NVIDIA A100, A6000)
+- **量化后**: 16GB 显存可运行 (使用 INT4/INT8 量化)
+
+### 免费/低成本 GPU 平台推荐
+
+#### 1. Google Colab (推荐新手)
+
+Google Colab 提供免费的 GPU 资源，适合学习和测试：
+
+**免费版特点:**
+- GPU: Tesla T4 (16GB 显存) 或 V100 (16GB)
+- 每次连续使用最长 12 小时
+- 需要定期重新连接
+- 适合测试和学习
+
+**Colab Pro/Pro+ (付费):**
+- GPU: V100 (16GB) 或 A100 (40GB)
+- 更长的运行时间和更好的稳定性
+- 月付 $9.99 (Pro) 或 $49.99 (Pro+)
+
+**使用步骤:**
+1. 访问 [Google Colab](https://colab.research.google.com/)
+2. 创建新笔记本，启用 GPU: `Runtime -> Change runtime type -> GPU`
+3. 安装依赖和部署模型
+4. 使用 Colab 的公网隧道（如 ngrok）暴露模型服务
+
+**示例代码:**
+```python
+# 安装依赖
+!pip install vllm transformers
+
+# 启动模型服务（建议使用量化以适应 T4 16GB 显存）
+!python -m vllm.entrypoints.openai.api_server \
+  --model zai-org/AutoGLM-Phone-9B \
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 8192 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization awq  # 使用量化减少显存占用，降低 max-model-len 减少显存占用
+```
+
+#### 2. Kaggle Notebooks
+
+Kaggle 提供稳定的免费 GPU 资源：
+
+**免费版特点:**
+- GPU: Tesla P100 (16GB) 或 T4 (16GB)
+- 每周 30 小时免费 GPU 时间
+- 相对稳定，适合中长时间任务
+
+**使用步骤:**
+1. 注册 [Kaggle](https://www.kaggle.com/) 账号
+2. 创建 Notebook: `Notebooks -> New Notebook`
+3. 启用 GPU: `Settings -> Accelerator -> GPU`
+4. 部署模型并暴露服务
+
+#### 3. Hugging Face Spaces (适合 Demo 部署)
+
+Hugging Face 提供免费的模型托管服务：
+
+**特点:**
+- 免费版: CPU/小型 GPU
+- 付费版: A10G (24GB) 或 A100 (40GB)
+- 适合部署 Demo 和长期服务
+- 与 Hugging Face 模型库无缝集成
+
+**使用步骤:**
+1. 在 [Hugging Face Spaces](https://huggingface.co/spaces) 创建新空间
+2. 选择 Gradio 或 Docker 模板
+3. 配置硬件: Settings -> Hardware -> GPU
+4. 部署模型服务
+
+#### 4. AutoDL / 智星云 / 恒源云 (国内选项)
+
+国内提供低成本 GPU 租赁服务：
+
+**AutoDL (推荐国内用户):**
+- 按小时计费，价格低廉（RTX 3090 约 ¥2-3/小时）
+- 提供 RTX 3090, A5000, A100 等多种显卡
+- 国内访问速度快，支持微信/支付宝支付
+- 网址: [https://www.autodl.com/](https://www.autodl.com/)
+
+**智星云:**
+- 价格实惠，新用户有优惠
+- 提供多种 GPU 选项
+- 网址: [https://www.ai-galaxy.cn/](https://www.ai-galaxy.cn/)
+
+**恒源云:**
+- 按需付费，灵活计费
+- GPU 选项丰富
+- 网址: [https://gpushare.com/](https://gpushare.com/)
+
+#### 5. Lightning AI (原 Grid.ai)
+
+提供免费和付费的 GPU 云服务：
+
+**特点:**
+- 免费额度: 每月有限的免费 GPU 小时
+- 易于部署和管理
+- 支持 PyTorch 生态
+- 网址: [https://lightning.ai/](https://lightning.ai/)
+
+### 模型量化以减少显存需求
+
+如果 GPU 显存不足，可以使用模型量化技术：
+
+**使用 vLLM 量化 (推荐):**
+```bash
+# INT8 量化 (约减少 50% 显存)
+python -m vllm.entrypoints.openai.api_server \
+  --model zai-org/AutoGLM-Phone-9B \
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization int8
+
+# AWQ 4-bit 量化 (约减少 75% 显存)
+# 需要先准备 AWQ 量化权重
+python -m vllm.entrypoints.openai.api_server \
+  --model zai-org/AutoGLM-Phone-9B \
+  --served-model-name autoglm-phone-9b \
+  --allowed-local-media-path / \
+  --mm-encoder-tp-mode data \
+  --mm_processor_cache_type shm \
+  --mm_processor_kwargs "{\"max_pixels\":5000000}" \
+  --max-model-len 25480 \
+  --chat-template-content-format string \
+  --limit-mm-per-prompt "{\"image\":10}" \
+  --port 8000 \
+  --quantization awq
+```
+
+**预期显存占用:**
+- FP16 全精度: ~20GB
+- INT8 量化: ~10GB
+- INT4/AWQ 量化: ~6GB
+
+### 远程部署最佳实践
+
+1. **选择合适的平台**: 新手推荐 Colab/Kaggle，长期使用推荐国内按时计费平台
+2. **使用量化**: 如果显存不足，优先考虑 INT8 或 AWQ 量化
+3. **配置网络访问**: 使用 ngrok、frp 或平台提供的公网 IP 暴露服务
+4. **定期保存检查点**: 免费平台可能会断连，注意保存工作进度
+5. **监控资源使用**: 注意 GPU 使用时间限制和配额
+
+### 故障排查
+
+**显存不足 (OOM):**
+- 尝试使用量化: `--quantization int8` 或 `--quantization awq`
+- 减小批处理大小: `--max-num-seqs 1`
+- 使用更小的上下文窗口: `--max-model-len 8192`
+
+**连接超时:**
+- 使用稳定的网络隧道工具 (ngrok, cloudflared)
+- 配置合适的超时参数
+- 考虑使用国内平台减少延迟
+
 ## 使用 AutoGLM
 
 ### 命令行
