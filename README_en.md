@@ -267,7 +267,7 @@ If GPU VRAM is insufficient, use model quantization techniques:
 
 **Using vLLM Quantization (Recommended):**
 ```bash
-# INT8 quantization (approximately 50% VRAM reduction)
+# INT8 quantization (approximately 50% VRAM reduction) - suitable for 16GB VRAM GPUs
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
   --served-model-name autoglm-phone-9b \
@@ -275,13 +275,13 @@ python -m vllm.entrypoints.openai.api_server \
   --mm-encoder-tp-mode data \
   --mm_processor_cache_type shm \
   --mm_processor_kwargs "{\"max_pixels\":5000000}" \
-  --max-model-len 25480 \
+  --max-model-len 8192 \
   --chat-template-content-format string \
   --limit-mm-per-prompt "{\"image\":10}" \
   --port 8000 \
   --quantization int8
 
-# AWQ 4-bit quantization (approximately 75% VRAM reduction)
+# AWQ 4-bit quantization (approximately 75% VRAM reduction) - suitable for 16GB VRAM GPUs
 # Requires pre-prepared AWQ quantized weights
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
@@ -290,11 +290,14 @@ python -m vllm.entrypoints.openai.api_server \
   --mm-encoder-tp-mode data \
   --mm_processor_cache_type shm \
   --mm_processor_kwargs "{\"max_pixels\":5000000}" \
-  --max-model-len 25480 \
+  --max-model-len 8192 \
   --chat-template-content-format string \
   --limit-mm-per-prompt "{\"image\":10}" \
   --port 8000 \
   --quantization awq
+
+# For larger VRAM (e.g., 24GB+), you can use the full context length:
+# --max-model-len 25480
 ```
 
 **Expected VRAM Usage:**

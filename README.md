@@ -228,7 +228,7 @@ Hugging Face 提供免费的模型托管服务：
 
 **使用 vLLM 量化 (推荐):**
 ```bash
-# INT8 量化 (约减少 50% 显存)
+# INT8 量化 (约减少 50% 显存) - 适合 16GB 显存 GPU
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
   --served-model-name autoglm-phone-9b \
@@ -236,13 +236,13 @@ python -m vllm.entrypoints.openai.api_server \
   --mm-encoder-tp-mode data \
   --mm_processor_cache_type shm \
   --mm_processor_kwargs "{\"max_pixels\":5000000}" \
-  --max-model-len 25480 \
+  --max-model-len 8192 \
   --chat-template-content-format string \
   --limit-mm-per-prompt "{\"image\":10}" \
   --port 8000 \
   --quantization int8
 
-# AWQ 4-bit 量化 (约减少 75% 显存)
+# AWQ 4-bit 量化 (约减少 75% 显存) - 适合 16GB 显存 GPU
 # 需要先准备 AWQ 量化权重
 python -m vllm.entrypoints.openai.api_server \
   --model zai-org/AutoGLM-Phone-9B \
@@ -251,11 +251,14 @@ python -m vllm.entrypoints.openai.api_server \
   --mm-encoder-tp-mode data \
   --mm_processor_cache_type shm \
   --mm_processor_kwargs "{\"max_pixels\":5000000}" \
-  --max-model-len 25480 \
+  --max-model-len 8192 \
   --chat-template-content-format string \
   --limit-mm-per-prompt "{\"image\":10}" \
   --port 8000 \
   --quantization awq
+
+# 如果有更大显存 (如 24GB+)，可以使用完整的上下文长度:
+# --max-model-len 25480
 ```
 
 **预期显存占用:**
